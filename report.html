@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Online Presence Report Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root{
+    --bg2:#0f0a04; --ink:#f4ecd8; --ink-dim:#b8a884; --ink-faint:#8a7a58;
+    --line:rgba(244,236,216,.14); --panel:rgba(244,236,216,.04);
+    --gold:#f2b705; --ember:#e8730c;
+    --good:#9ec96a; --okay:#e0a93a; --low:#e8884c; --bad:#e06a52;
+    --serif:'Fraunces',Georgia,serif; --sans:'Hanken Grotesk',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:linear-gradient(180deg,#1d1407,#0d0903);min-height:100vh;font-family:var(--sans);color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;padding:clamp(16px,4vw,48px) 16px}
+  .state{font-family:var(--serif);font-style:italic;font-size:18px;color:var(--ink-dim);margin-top:60px;text-align:center}
+  .spinner{width:30px;height:30px;border:2.5px solid rgba(244,236,216,.2);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;margin:60px auto 12px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* capture target */
+  .card{width:min(620px,100%);background:#1a1206;border:1px solid var(--line);border-radius:18px;
+    padding:clamp(24px,4vw,40px);box-shadow:0 30px 80px rgba(0,0,0,.5)}
+  .card-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .brand{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+  .who{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--ink-dim)}
+
+  .field{position:relative;margin-top:22px;height:230px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .field .grade{font-family:var(--serif);font-weight:600;font-size:clamp(86px,16vw,128px);color:#fbf3df;line-height:1;text-shadow:0 4px 24px rgba(0,0,0,.35)}
+  .caption{text-align:center;margin-top:18px}
+  .verdict{font-family:var(--serif);font-size:21px;font-weight:500}
+  .firstread{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--ink-dim);margin-top:6px;line-height:1.5}
+  .score{font-size:12px;color:var(--ink-faint);margin-top:8px;letter-spacing:.04em}
+
+  .rows{margin-top:24px;border-top:1px solid var(--line);padding-top:6px}
+  .row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid rgba(244,236,216,.07)}
+  .row:last-child{border-bottom:none}
+  .row-label{font-size:13px;color:var(--ink);width:130px;flex-shrink:0}
+  .row-bar{flex:1;height:5px;border-radius:3px;background:rgba(244,236,216,.1);overflow:hidden}
+  .row-bar > div{height:100%;border-radius:3px}
+  .row-grade{font-family:var(--serif);font-size:18px;font-weight:600;width:34px;text-align:right;flex-shrink:0}
+  .card-foot{margin-top:22px;text-align:center;font-size:11px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase}
+
+  .controls{width:min(620px,100%);margin-top:22px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center}
+  .btn{border:none;cursor:pointer;border-radius:11px;font-family:var(--sans);font-weight:600;font-size:15px;padding:13px 24px;transition:transform .15s,filter .2s}
+  .btn:hover{transform:translateY(-1px)}
+  .btn.dl{background:linear-gradient(135deg,var(--gold),var(--ember));color:#1a1206}
+  .btn.dl:disabled{opacity:.55;cursor:wait}
+  .btn.cta{background:var(--ink);color:#1a1206;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+  .dl-status{width:100%;text-align:center;font-size:12.5px;color:var(--ink-dim);min-height:1.1em}
+  .cta-line{width:min(620px,100%);text-align:center;margin-top:26px;font-family:var(--serif);font-style:italic;font-size:15px;color:var(--ink-dim);line-height:1.55}
+  .foot{margin-top:24px;font-size:11.5px;color:var(--ink-faint)}
+  .foot a{color:var(--ink-dim)}
+</style>
+</head>
+<body>
+  <div id="loading"><div class="spinner"></div><div class="state">Pulling your report card…</div></div>
+  <div id="error" class="state" style="display:none">This report card couldn't be found. The link may be old or incomplete.</div>
+
+  <div id="card" class="card" style="display:none">
+    <div class="card-head">
+      <div class="brand">ReRev Labs · Online Presence</div>
+      <div class="who" id="who"></div>
+    </div>
+    <div class="field" id="field"><div class="grade" id="grade"></div></div>
+    <div class="caption">
+      <div class="verdict" id="verdict"></div>
+      <div class="firstread" id="firstread"></div>
+      <div class="score" id="score"></div>
+    </div>
+    <div class="rows" id="rows"></div>
+    <div class="card-foot">rerev.io</div>
+  </div>
+
+  <div class="controls" id="controls" style="display:none">
+    <button class="btn dl" id="dlBtn" onclick="downloadAsImage()">⬇ Download as PNG</button>
+    <a class="btn cta" href="https://app.hubble.social/keyonameeks" target="_blank" rel="noopener">Talk with Keyona →</a>
+    <div class="dl-status" id="dlStatus"></div>
+  </div>
+  <div class="cta-line" id="ctaLine" style="display:none">A cleaner presence is step one. The work that moves the needle is building the business and raising the capital to grow it. That's the conversation worth having.</div>
+  <div class="foot" id="footLink" style="display:none"><a href="/" >Run a report card →</a></div>
+
+<script>
+const GRADE={A:{c:'#9ec96a',t:'good'},B:{c:'#7fb6e0',t:'good'},C:{c:'#e0a93a',t:'mid'},D:{c:'#e8884c',t:'low'},F:{c:'#e06a52',t:'low'}};
+const BANDS={good:['#f4c01f','#e8730c','#c85316'],mid:['#e8920c','#c9461a','#9e3516'],low:['#c2410c','#7a2014','#4e1410']};
+const $=id=>document.getElementById(id);
+function gInfo(g){const k=(g||'C').trim().charAt(0).toUpperCase();return GRADE[k]||GRADE.C;}
+function esc(s){return String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+
+const token=new URLSearchParams(location.search).get('t')||'';
+init();
+async function init(){
+  if(!token){return fail();}
+  try{
+    const res=await fetch('/api/get-report?t='+encodeURIComponent(token));
+    if(!res.ok) return fail();
+    render(await res.json());
+  }catch(e){ fail(); }
+}
+function fail(){ $('loading').style.display='none'; $('error').style.display='block'; }
+
+function render(r){
+  const info=gInfo(r.composite_grade), bands=BANDS[info.t];
+  const first=(r.full_name||'').split(' ')[0]||'You';
+  $('who').textContent=first+"'s reading";
+  $('field').style.background='linear-gradient(178deg,'+bands[0]+' 0%,'+bands[1]+' 55%,'+bands[2]+' 100%)';
+  $('grade').textContent=r.composite_grade||'';
+  $('verdict').textContent=r.piece_title||'Your Presence';
+  $('firstread').textContent=r.first_read||'';
+  $('score').textContent=(r.composite_score!=null?'Composite '+r.composite_score+' / 100':'');
+  const rows=$('rows'); rows.innerHTML='';
+  (r.categories||[]).forEach(cat=>{
+    const ci=gInfo(cat.grade);
+    const el=document.createElement('div'); el.className='row';
+    el.innerHTML='<div class="row-label">'+esc(cat.label)+'</div>'+
+      '<div class="row-bar"><div style="width:'+(cat.score||0)+'%;background:'+ci.c+'"></div></div>'+
+      '<div class="row-grade" style="color:'+ci.c+'">'+esc(cat.grade||'')+'</div>';
+    rows.appendChild(el);
+  });
+  $('loading').style.display='none';
+  $('card').style.display='block';
+  $('controls').style.display='flex';
+  $('ctaLine').style.display='block';
+  $('footLink').style.display='block';
+}
+
+async function downloadAsImage(){
+  const btn=$('dlBtn'), status=$('dlStatus'), target=$('card');
+  btn.disabled=true; btn.textContent='Capturing…'; status.textContent='';
+  try{
+    if(document.fonts&&document.fonts.ready) await document.fonts.ready;
+    const canvas=await html2canvas(target,{scale:2,useCORS:true,backgroundColor:'#1a1206',logging:false});
+    const link=document.createElement('a');
+    link.download='report-card.png';
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+    status.textContent='✓ Downloading — check your Downloads folder.';
+    status.style.color='#9ec96a';
+  }catch(err){
+    status.textContent='✗ Could not capture the image. Try again.';
+    status.style.color='#e06a52';
+  }finally{
+    btn.disabled=false; btn.textContent='⬇ Download as PNG';
+  }
+}
+</script>
+</body>
+</html>
