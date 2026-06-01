@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your Online Presence — A Report Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<style>
+  :root{
+    --bg:#1a1206; --bg2:#0f0a04;
+    --ink:#f4ecd8; --ink-dim:#b8a884; --ink-faint:#8a7a58;
+    --line:rgba(244,236,216,.14);
+    --panel:rgba(244,236,216,.035);
+    --gold:#f2b705; --ember:#e8730c; --rust:#c2410c;
+    --good:#9ec96a; --okay:#e0a93a; --low:#e8884c; --bad:#e06a52;
+    --serif:'Fraunces',Georgia,serif;
+    --sans:'Hanken Grotesk',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg2);color:var(--ink);font-family:var(--sans);min-height:100vh}
+  body{
+    background:
+      radial-gradient(120% 80% at 70% 12%, rgba(242,183,5,.10), transparent 55%),
+      radial-gradient(90% 70% at 78% 70%, rgba(194,65,12,.10), transparent 60%),
+      linear-gradient(180deg,#1d1407,#0d0903);
+    padding:clamp(16px,3vw,40px);
+  }
+  .wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:312px 1fr;gap:clamp(20px,3vw,44px);align-items:start}
+  @media(max-width:860px){.wrap{grid-template-columns:1fr}}
+
+  .register{position:sticky;top:24px;display:flex;flex-direction:column;gap:22px}
+  @media(max-width:860px){.register{position:static}}
+  .reg-block{border-top:1px solid var(--line);padding-top:14px}
+  .reg-label{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+  .subject-name{font-family:var(--serif);font-size:26px;line-height:1.08;font-weight:500;margin-top:8px}
+  .subject-sub{font-size:13px;color:var(--ink-dim);margin-top:3px}
+
+  .composite{display:flex;align-items:baseline;gap:12px;margin-top:8px}
+  .composite-grade{font-family:var(--serif);font-size:54px;font-weight:600;line-height:.9}
+  .composite-score{font-size:13px;color:var(--ink-dim)}
+  .firstread{font-family:var(--serif);font-style:italic;font-size:16px;line-height:1.45;color:var(--ink);margin-top:8px}
+
+  .field{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+  .field label{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+  .field .opt{text-transform:none;letter-spacing:0;color:var(--ink-faint)}
+  .field input,.field select{
+    background:var(--panel);border:1px solid var(--line);border-radius:9px;
+    color:var(--ink);font-family:var(--sans);font-size:14px;padding:10px 12px;outline:none;transition:border-color .2s,background .2s;
+    -webkit-appearance:none;appearance:none;cursor:pointer;
+  }
+  .field input{cursor:text}
+  .field select{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M3 4.5L6 7.5L9 4.5' stroke='%238a7a58' stroke-width='1.4' fill='none'/></svg>");background-repeat:no-repeat;background-position:right 12px center}
+  .field select option{background:#1a1206;color:var(--ink)}
+  .field input:focus,.field select:focus{border-color:rgba(242,183,5,.5);background:rgba(242,183,5,.05)}
+  .field input::placeholder{color:var(--ink-faint)}
+  .turnstile-wrap{margin-top:14px}
+  .run{
+    margin-top:16px;border:none;cursor:pointer;border-radius:10px;width:100%;
+    background:linear-gradient(135deg,var(--gold),var(--ember));
+    color:#1a1206;font-family:var(--sans);font-weight:600;font-size:14px;letter-spacing:.02em;
+    padding:13px 16px;transition:transform .15s,filter .2s,box-shadow .2s,opacity .2s;
+    box-shadow:0 6px 22px rgba(232,115,12,.25);
+  }
+  .run:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.06);box-shadow:0 10px 30px rgba(232,115,12,.35)}
+  .run:disabled{opacity:.4;cursor:not-allowed;background:rgba(244,236,216,.12);color:var(--ink-faint);box-shadow:none}
+  .reg-note{font-size:11.5px;color:var(--ink-faint);line-height:1.5;margin-top:14px}
+
+  .gallery-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:22px}
+  .kicker{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+  .collection{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--ink-dim)}
+
+  .piece-frame{display:flex;flex-direction:column;align-items:center}
+  .canvas{position:relative;width:min(560px,92%);aspect-ratio:4/4.3;border-radius:6px;overflow:hidden;
+    box-shadow:0 30px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(244,236,216,.06);background:#2a1c0a}
+  .band{position:absolute;left:-6%;right:-6%;filter:blur(14px)}
+  .band.b1{top:-4%;height:46%}
+  .band.b2{top:42%;height:22%}
+  .band.b3{top:62%;height:46%}
+  .canvas-grade{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:var(--serif);font-weight:600;font-size:clamp(90px,18vw,150px);color:rgba(248,240,222,.94);
+    text-shadow:0 4px 30px rgba(0,0,0,.4);letter-spacing:-.02em}
+  .canvas-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:0 30px}
+  .canvas-empty .ce-title{font-family:var(--serif);font-style:italic;font-size:22px;color:rgba(248,240,222,.8)}
+  .canvas-empty .ce-sub{font-size:13px;color:var(--ink-faint)}
+  .piece-caption{text-align:center;margin-top:18px;max-width:520px}
+  .piece-title{font-family:var(--serif);font-size:22px;font-weight:500}
+  .piece-desc{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--ink-dim);margin-top:6px;line-height:1.5}
+
+  .spinner{width:30px;height:30px;border:2.5px solid rgba(244,236,216,.2);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .load-msg{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--ink-dim);min-height:1.2em}
+
+  .breakdown{margin-top:40px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;opacity:0;transform:translateY(8px);animation:rise .5s forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .card-label{font-size:13px;font-weight:600;color:var(--ink)}
+  .card-sub{font-size:11px;color:var(--ink-faint);margin-top:1px}
+  .card-grade{font-family:var(--serif);font-size:30px;font-weight:600;line-height:.9}
+  .bar{height:5px;border-radius:3px;background:rgba(244,236,216,.1);margin:12px 0;overflow:hidden}
+  .bar > div{height:100%;border-radius:3px;width:0;transition:width 1s cubic-bezier(.4,0,.2,1)}
+  .finding{font-size:12.5px;color:var(--ink-dim);line-height:1.5}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+  .tag{font-size:10.5px;letter-spacing:.02em;padding:3px 8px;border-radius:20px;font-weight:500}
+  .tag.win{background:rgba(158,201,106,.14);color:var(--good)}
+  .tag.fix{background:rgba(224,106,82,.14);color:var(--bad)}
+
+  .cta{margin-top:42px;border:1px solid var(--line);border-radius:18px;padding:clamp(24px,4vw,40px);
+    background:linear-gradient(120deg,rgba(242,183,5,.07),rgba(194,65,12,.06));
+    display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}
+  .cta-copy{max-width:520px}
+  .cta-title{font-family:var(--serif);font-size:clamp(22px,3vw,28px);font-weight:500;line-height:1.15}
+  .cta-sub{font-size:14px;color:var(--ink-dim);margin-top:8px;line-height:1.5}
+  .cta-btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;white-space:nowrap;
+    background:var(--ink);color:#1a1206;font-family:var(--sans);font-weight:600;font-size:15px;
+    padding:14px 24px;border-radius:11px;transition:transform .15s,filter .2s}
+  .cta-btn:hover{transform:translateY(-1px);filter:brightness(.94)}
+  .foot{text-align:center;margin-top:28px;font-size:11.5px;color:var(--ink-faint);letter-spacing:.04em}
+  .foot a{color:var(--ink-dim)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <aside class="register">
+    <div class="reg-block" style="border-top:none;padding-top:0">
+      <div class="reg-label">The Subject</div>
+      <div class="subject-name" id="subjName">—</div>
+      <div class="subject-sub" id="subjSub">Enter your details to begin</div>
+    </div>
+
+    <div class="reg-block" id="compositeBlock" style="display:none">
+      <div class="reg-label">Composite Grade</div>
+      <div class="composite"><div class="composite-grade" id="compGrade">–</div><div class="composite-score" id="compScore"></div></div>
+    </div>
+
+    <div class="reg-block" id="firstreadBlock" style="display:none">
+      <div class="reg-label">First Read</div>
+      <div class="firstread" id="firstRead"></div>
+    </div>
+
+    <div class="reg-block">
+      <div class="reg-label">Run a Report Card</div>
+      <div class="field"><label>Full name</label><input id="inFull" placeholder="Jane Founder" autocomplete="name"></div>
+      <div class="field"><label>Email</label><input id="inEmail" type="email" placeholder="you@company.com" autocomplete="email"></div>
+      <div class="field"><label>LinkedIn or handle <span class="opt">(optional)</span></label><input id="inLinkedIn" placeholder="linkedin.com/in/…"></div>
+      <div class="field"><label>Website <span class="opt">(optional)</span></label><input id="inSite" placeholder="yoursite.com"></div>
+      <div class="field"><label>What are we looking at?</label>
+        <select id="inType">
+          <option value="consulting">A consulting or service business</option>
+          <option value="personal">A personal brand</option>
+          <option value="product">A product or startup I'm building</option>
+        </select>
+      </div>
+      <!-- SETUP: replace data-sitekey with your Cloudflare Turnstile SITE key. -->
+      <div class="turnstile-wrap"><div class="cf-turnstile" data-sitekey="YOUR_TURNSTILE_SITE_KEY" data-theme="dark"></div></div>
+      <button class="run" id="runBtn" disabled>Enter your full name and email to run</button>
+      <div class="reg-note">Reads what's publicly findable, your site, LinkedIn, social, press, and grades how your presence reads to a stranger or an investor. Telling it what you're building sharpens the read.</div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="gallery-head">
+      <div class="kicker">Your Online Presence</div>
+      <div class="collection">The Standing Collection</div>
+    </div>
+
+    <div class="piece-frame">
+      <div class="canvas" id="canvas">
+        <div class="canvas-empty" id="canvasEmpty">
+          <div class="ce-title">Nothing on the wall yet.</div>
+          <div class="ce-sub">Add your name and email on the left, then run your report card.</div>
+        </div>
+        <div class="canvas-grade" id="canvasGrade" style="display:none"></div>
+      </div>
+      <div class="piece-caption">
+        <div class="piece-title" id="pieceTitle"></div>
+        <div class="piece-desc" id="pieceDesc"></div>
+      </div>
+    </div>
+
+    <div class="breakdown" id="breakdown" style="display:none">
+      <div class="kicker">The Breakdown</div>
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <div class="cta">
+      <div class="cta-copy">
+        <div class="cta-title">The report card is the on-ramp, not the destination.</div>
+        <div class="cta-sub">How you show up online decides who takes you seriously, an investor, a customer, a partner. But a cleaner presence is step one. The work that actually changes your trajectory is building the business and raising the capital to grow it, and that's what I do with founders. If something here stung, that's the conversation worth having.</div>
+      </div>
+      <a class="cta-btn" id="hubbleBtn" href="https://app.hubble.social/keyonameeks" target="_blank" rel="noopener">Talk with Keyona →</a>
+    </div>
+
+    <div class="foot">A ReRev Labs reading · <a href="https://rerev.io" target="_blank" rel="noopener">rerev.io</a></div>
+  </main>
+</div>
+
+<script>
+const GRADE = {A:{color:'#9ec96a',tier:'good'},B:{color:'#7fb6e0',tier:'good'},C:{color:'#e0a93a',tier:'mid'},D:{color:'#e8884c',tier:'low'},F:{color:'#e06a52',tier:'low'}};
+const BANDS = {good:['#f4c01f','#e8730c','#c85316'],mid:['#e8920c','#c9461a','#9e3516'],low:['#c2410c','#7a2014','#4e1410']};
+const LOAD_MSGS = ["Walking the room…","Reading the wall text…","Checking what a stranger sees first…","Holding it up to the light…","Hanging the piece…"];
+function gInfo(g){const k=(g||'C').trim().charAt(0).toUpperCase();return GRADE[k]||GRADE.C;}
+const $ = id => document.getElementById(id);
+const emailOk = e => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
+let loading = false;
+
+function refreshGate(){
+  const ready = $('inFull').value.trim() && emailOk($('inEmail').value.trim());
+  $('runBtn').disabled = !ready || loading;
+  if(loading) $('runBtn').textContent = 'Reading…';
+  else $('runBtn').textContent = ready ? 'Run my report card' : 'Enter your full name and email to run';
+}
+['inFull','inEmail'].forEach(id=>$(id).addEventListener('input',refreshGate));
+$('runBtn').addEventListener('click',run);
+['inFull','inEmail','inLinkedIn','inSite'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter'&&!$('runBtn').disabled)run();}));
+
+async function run(){
+  if(loading) return;
+  const full=$('inFull').value.trim(), email=$('inEmail').value.trim();
+  if(!full||!emailOk(email)){refreshGate();return;}
+  const linkedin=$('inLinkedIn').value.trim(), site=$('inSite').value.trim(), type=$('inType').value;
+  let token='';
+  try{ token=(window.turnstile&&turnstile.getResponse&&turnstile.getResponse())||document.querySelector('[name=cf-turnstile-response]')?.value||''; }catch(e){}
+
+  loading=true; refreshGate();
+  $('subjName').textContent=full;
+  $('subjSub').textContent=[site,linkedin].filter(Boolean).join(' · ')||'reading the public record';
+  showLoading();
+
+  try{
+    const res=await fetch('/api/report',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({full_name:full,email,linkedin,site,type,turnstile_token:token})
+    });
+    const data=await res.json();
+    if(!res.ok){ showError(data&&data.error?data.error:"Something went wrong. Please try again."); }
+    else { render(data); }
+  }catch(err){
+    showError("The reading didn't come through. Please try again.");
+  }finally{
+    loading=false; refreshGate();
+    try{ window.turnstile&&turnstile.reset&&turnstile.reset(); }catch(e){}
+  }
+}
+
+let loadTimer=null;
+function showLoading(){
+  $('canvasGrade').style.display='none';
+  $('canvas').querySelectorAll('.band').forEach(b=>b.remove());
+  $('breakdown').style.display='none';
+  $('pieceTitle').textContent=''; $('pieceDesc').textContent='';
+  $('canvasEmpty').style.display='flex';
+  $('canvasEmpty').innerHTML='<div class="spinner"></div><div class="load-msg" id="loadMsg">'+LOAD_MSGS[0]+'</div>';
+  let i=0; clearInterval(loadTimer);
+  loadTimer=setInterval(()=>{i=(i+1)%LOAD_MSGS.length;const el=$('loadMsg');if(el)el.textContent=LOAD_MSGS[i];},1400);
+}
+function showError(msg){
+  clearInterval(loadTimer);
+  $('canvasGrade').style.display='none';
+  $('canvas').querySelectorAll('.band').forEach(b=>b.remove());
+  $('canvasEmpty').style.display='flex';
+  $('canvasEmpty').innerHTML='<div class="ce-title">'+esc(msg)+'</div><div class="ce-sub">Adding a website or LinkedIn link gives a cleaner result.</div>';
+}
+function render(r){
+  clearInterval(loadTimer);
+  const info=gInfo(r.composite_grade), bands=BANDS[info.tier];
+  const c=$('canvas'); c.querySelectorAll('.band').forEach(b=>b.remove());
+  $('canvasEmpty').style.display='none';
+  [['b1',bands[0]],['b2',bands[1]],['b3',bands[2]]].forEach(([cls,col])=>{const d=document.createElement('div');d.className='band '+cls;d.style.background=col;c.insertBefore(d,$('canvasGrade'));});
+  const cg=$('canvasGrade'); cg.style.display='flex'; cg.textContent=r.composite_grade||'';
+  $('compositeBlock').style.display='block';
+  $('compGrade').textContent=r.composite_grade||''; $('compGrade').style.color=info.color;
+  $('compScore').textContent=(r.composite_score!=null?r.composite_score+' / 100':'');
+  $('firstreadBlock').style.display='block';
+  $('firstRead').textContent=r.first_read||'';
+  $('pieceTitle').textContent=r.piece_title||'Your Presence';
+  $('pieceDesc').textContent=r.first_read||'';
+  const grid=$('grid'); grid.innerHTML='';
+  (r.categories||[]).forEach((cat,idx)=>{
+    const ci=gInfo(cat.grade); const card=document.createElement('div');
+    card.className='card'; card.style.animationDelay=(idx*60)+'ms';
+    card.innerHTML='<div class="card-top"><div><div class="card-label">'+esc(cat.label)+'</div><div class="card-sub">'+esc(cat.sublabel||'')+'</div></div>'+
+      '<div class="card-grade" style="color:'+ci.color+'">'+esc(cat.grade||'')+'</div></div>'+
+      '<div class="bar"><div data-w="'+(cat.score||0)+'" style="background:'+ci.color+'"></div></div>'+
+      '<div class="finding">'+esc(cat.finding||'')+'</div>'+
+      '<div class="tags">'+(cat.win?'<span class="tag win">'+esc(cat.win)+'</span>':'')+(cat.fix?'<span class="tag fix">'+esc(cat.fix)+'</span>':'')+'</div>';
+    grid.appendChild(card);
+  });
+  $('breakdown').style.display='block';
+  requestAnimationFrame(()=>{document.querySelectorAll('.bar > div').forEach(b=>b.style.width=(b.dataset.w||0)+'%');});
+}
+function esc(s){return String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+refreshGate();
+</script>
+</body>
+</html>
