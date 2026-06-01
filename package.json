@@ -1,0 +1,7 @@
+{
+  "name": "online-report-card",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ReRev Labs online presence report card Pixie",
+  "engines": { "node": ">=18" }
+}
