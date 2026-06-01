@@ -5,8 +5,13 @@
 [functions]
   node_bundler = "esbuild"
 
-# Pretty endpoint: the page calls /api/report, which routes to the function.
+# Pretty endpoints: the pages call /api/*, which route to the functions.
 [[redirects]]
   from = "/api/report"
   to = "/.netlify/functions/report"
+  status = 200
+
+[[redirects]]
+  from = "/api/get-report"
+  to = "/.netlify/functions/get-report"
   status = 200
