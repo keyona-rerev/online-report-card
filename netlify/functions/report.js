@@ -17,6 +17,7 @@ const TYPE_GUIDE = {
 
 async function sendEmail({ to, fullName, clean, shareUrl, key, from }) {
   const firstName = (fullName.split(' ')[0] || 'there').slice(0, 40);
+  const replyTo = process.env.EMAIL_REPLY_TO || 'keyona@rerev.io';
   const html =
 `<div style="font-family:Georgia,serif;background:#0f0a04;color:#f4ecd8;padding:32px;border-radius:14px;max-width:520px;margin:0 auto">
   <div style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#8a7a58">ReRev Labs</div>
@@ -31,7 +32,7 @@ async function sendEmail({ to, fullName, clean, shareUrl, key, from }) {
   await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from, to: [to], subject: `${firstName}, your online presence report card`, html }),
+    body: JSON.stringify({ from, to: [to], reply_to: replyTo, subject: `${firstName}, your online presence report card`, html }),
   });
 }
 
