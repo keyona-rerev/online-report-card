@@ -109,6 +109,11 @@
   .tag.win{background:rgba(158,201,106,.14);color:var(--good)}
   .tag.fix{background:rgba(224,106,82,.14);color:var(--bad)}
 
+  .share-row{text-align:center;margin-top:28px}
+  .share-link{display:inline-flex;align-items:center;gap:8px;text-decoration:none;background:transparent;border:1px solid var(--line);
+    color:var(--ink);font-family:var(--sans);font-weight:600;font-size:14px;padding:12px 22px;border-radius:11px;transition:background .2s}
+  .share-link:hover{background:rgba(244,236,216,.06)}
+
   .cta{margin-top:42px;border:1px solid var(--line);border-radius:18px;padding:clamp(24px,4vw,40px);
     background:linear-gradient(120deg,rgba(242,183,5,.07),rgba(194,65,12,.06));
     display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}
@@ -188,6 +193,10 @@
       <div class="grid" id="grid"></div>
     </div>
 
+    <div class="share-row" id="shareRow" style="display:none">
+      <a class="share-link" id="shareLink" href="#" target="_blank" rel="noopener">View &amp; download your card →</a>
+    </div>
+
     <div class="cta">
       <div class="cta-copy">
         <div class="cta-title">The report card is the on-ramp, not the destination.</div>
@@ -253,6 +262,7 @@ function showLoading(){
   $('canvasGrade').style.display='none';
   $('canvas').querySelectorAll('.band').forEach(b=>b.remove());
   $('breakdown').style.display='none';
+  $('shareRow').style.display='none';
   $('pieceTitle').textContent=''; $('pieceDesc').textContent='';
   $('canvasEmpty').style.display='flex';
   $('canvasEmpty').innerHTML='<div class="spinner"></div><div class="load-msg" id="loadMsg">'+LOAD_MSGS[0]+'</div>';
@@ -263,6 +273,7 @@ function showError(msg){
   clearInterval(loadTimer);
   $('canvasGrade').style.display='none';
   $('canvas').querySelectorAll('.band').forEach(b=>b.remove());
+  $('shareRow').style.display='none';
   $('canvasEmpty').style.display='flex';
   $('canvasEmpty').innerHTML='<div class="ce-title">'+esc(msg)+'</div><div class="ce-sub">Adding a website or LinkedIn link gives a cleaner result.</div>';
 }
@@ -292,6 +303,8 @@ function render(r){
     grid.appendChild(card);
   });
   $('breakdown').style.display='block';
+  if(r.token){ $('shareLink').href='/report.html?t='+encodeURIComponent(r.token); $('shareRow').style.display='block'; }
+  else { $('shareRow').style.display='none'; }
   requestAnimationFrame(()=>{document.querySelectorAll('.bar > div').forEach(b=>b.style.width=(b.dataset.w||0)+'%');});
 }
 function esc(s){return String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
