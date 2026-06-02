@@ -44,6 +44,11 @@
   .row-bar{flex:1;height:5px;border-radius:3px;background:rgba(244,236,216,.1);overflow:hidden}
   .row-bar > div{height:100%;border-radius:3px}
   .row-grade{font-family:var(--serif);font-size:18px;font-weight:600;width:34px;text-align:right;flex-shrink:0}
+
+  .reads{margin-top:22px;border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:14px}
+  .read-block .rk{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+  .read-block .rt{font-family:var(--serif);font-size:14px;line-height:1.5;color:var(--ink);margin-top:5px}
+
   .card-foot{margin-top:22px;text-align:center;font-size:11px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase}
 
   .controls{width:min(620px,100%);margin-top:22px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center}
@@ -74,6 +79,7 @@
       <div class="score" id="score"></div>
     </div>
     <div class="rows" id="rows"></div>
+    <div class="reads" id="reads" style="display:none"></div>
     <div class="card-foot">rerev.io</div>
   </div>
 
@@ -122,6 +128,12 @@ function render(r){
       '<div class="row-grade" style="color:'+ci.c+'">'+esc(cat.grade||'')+'</div>';
     rows.appendChild(el);
   });
+  const reads=$('reads'); reads.innerHTML='';
+  const addRead=(label,text)=>{ if(!text) return; const d=document.createElement('div'); d.className='read-block'; d.innerHTML='<div class="rk">'+esc(label)+'</div><div class="rt">'+esc(text)+'</div>'; reads.appendChild(d); };
+  addRead("The story you're telling", r.narrative);
+  addRead("How your audience reads you right now", r.audience_read);
+  addRead("Your secondary job, and the overlap", r.harmony);
+  reads.style.display = reads.children.length ? 'flex' : 'none';
   $('loading').style.display='none';
   $('card').style.display='block';
   $('controls').style.display='flex';
