@@ -17,7 +17,7 @@ exports.handler = async (event) => {
 
   try {
     const r = await fetch(
-      `${SUPABASE_URL}/rest/v1/report_cards?select=full_name,business_type,composite_grade,composite_score,first_read,report&token=eq.${encodeURIComponent(token)}&limit=1`,
+      `${SUPABASE_URL}/rest/v1/report_cards?select=full_name,primary_job,secondary_job,composite_grade,composite_score,first_read,report&token=eq.${encodeURIComponent(token)}&limit=1`,
       { headers: { apikey: SUPABASE_SERVICE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_KEY}` } }
     );
     const rows = await r.json();
@@ -26,11 +26,15 @@ exports.handler = async (event) => {
     const rep = row.report || {};
     return json(200, {
       full_name: row.full_name,
-      business_type: row.business_type,
+      primary_job: row.primary_job,
+      secondary_job: row.secondary_job,
       composite_grade: row.composite_grade,
       composite_score: row.composite_score,
       first_read: row.first_read,
       piece_title: rep.piece_title || 'Your Presence',
+      narrative: rep.narrative || '',
+      audience_read: rep.audience_read || '',
+      harmony: rep.harmony || '',
       categories: rep.categories || [],
     });
   } catch (e) {
