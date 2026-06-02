@@ -9,10 +9,20 @@ const json = (statusCode, obj) => ({
   body: JSON.stringify(obj),
 });
 
-const TYPE_GUIDE = {
-  consulting: "This is a consulting or service business. Weight LinkedIn authority, a clear and specific offer, proof of results, and an easy path to book or contact. Judge it on whether a prospective client would trust them with money.",
-  personal: "This is a personal brand. Weight a coherent narrative across profiles, content cadence, social reach, and whether a clear point of view comes through. Judge it on whether a stranger would follow and remember them.",
-  product: "This is a product or startup. Weight whether the site is legible to both customers and investors, clarity on what the product does and who it is for, any signs of traction or team, and whether it looks fundable. Judge it on whether an investor or early customer would lean in.",
+const JOBS = ['clients', 'investors', 'hired', 'profile'];
+
+const JOB_GUIDE = {
+  clients: "PRIMARY JOB — Win clients. This presence is top of funnel; its job is to turn attention into client conversations. Weight a clear, specific offer, proof of results, trust signals, and an obvious low-friction path to contact or book. Judge it on whether a prospective client would reach out and trust them with money. Build-in-public content that does not move a buyer toward a conversation should score lower.",
+  investors: "PRIMARY JOB — Attract investors. Before a raise, this presence must make an investor who looks them up take the meeting. Weight a coherent traction narrative, category clarity, founder legibility, team and momentum signals, and whether the thesis is graspable in about thirty seconds. Judge it on whether an investor would lean in. A polished client-booking funnel is not what matters here.",
+  hired: "PRIMARY JOB — Get hired. This presence must make a recruiter or hiring manager who looks them up move them forward instead of passing. Weight LinkedIn heavily, clarity on the role and level they are targeting, legible and focused experience, and clean results when their name is searched. Judge it on whether someone deciding who to interview would stop on them. A scattered profile that lists everything scores lower than a focused one.",
+  profile: "PRIMARY JOB — Build a public profile. This presence must make people want to put them on stages or inside projects. Weight a clear point of view, consistency, social reach and engagement, and collaboration-readiness. Judge it on whether someone would invite them to speak or collaborate. A buried contact form barely matters; a missing or muddy point of view costs a lot. The goal is visibility that converts into opportunity, not aesthetics.",
+};
+
+const JOB_AUDIENCE = {
+  clients: "a prospective client",
+  investors: "an investor",
+  hired: "a recruiter or hiring manager",
+  profile: "an event organizer or potential collaborator",
 };
 
 async function sendEmail({ to, fullName, clean, shareUrl, key, from }) {
@@ -26,7 +36,7 @@ async function sendEmail({ to, fullName, clean, shareUrl, key, from }) {
   <div style="font-size:64px;font-weight:600;line-height:1;color:#f2b705;margin:6px 0">${clean.composite_grade}</div>
   <p style="font-style:italic;font-size:16px;line-height:1.5;color:#f4ecd8;margin:8px 0 22px">${clean.first_read}</p>
   <a href="${shareUrl}" style="display:inline-block;background:#f2b705;color:#1a1206;text-decoration:none;font-family:Arial,sans-serif;font-weight:bold;font-size:15px;padding:13px 24px;border-radius:10px">View your full report card &rarr;</a>
-  <p style="font-size:12px;color:#8a7a58;margin:26px 0 0">The full card shows all seven areas and the two fixes that matter most. You can also download it as an image.</p>
+  <p style="font-size:12px;color:#8a7a58;margin:26px 0 0">The full card shows all seven areas, the fixes that matter most, and how your audience is reading you. You can also download it as an image.</p>
   <p style="font-size:13px;color:#b8a884;margin:16px 0 0">Keyona, ReRev Labs</p>
 </div>`;
   await fetch('https://api.resend.com/emails', {
@@ -47,11 +57,14 @@ exports.handler = async (event) => {
   const email = String(body.email || '').trim().toLowerCase();
   const linkedin = String(body.linkedin || '').trim();
   const site = String(body.site || '').trim();
-  const type = ['consulting', 'personal', 'product'].includes(body.type) ? body.type : 'consulting';
+  const primaryJob = JOBS.includes(body.primary_job) ? body.primary_job : null;
+  let secondaryJob = JOBS.includes(body.secondary_job) ? body.secondary_job : 'none';
+  if (secondaryJob === primaryJob) secondaryJob = 'none';
   const token = String(body.turnstile_token || '');
 
   if (!fullName || fullName.length > 80) return json(400, { error: 'Please enter your full name.' });
   if (email.length > 120 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json(400, { error: 'Please enter a valid email.' });
+  if (!primaryJob) return json(400, { error: 'Please pick the primary job of your presence.' });
   if (linkedin.length > 200 || site.length > 200) return json(400, { error: 'That link looks too long.' });
   const urlOk = (u) => !u || /^(https?:\/\/)?[\w.-]+\.[a-z]{2,}([/?#].*)?$/i.test(u);
   if (!urlOk(site) || !urlOk(linkedin)) return json(400, { error: 'That does not look like a web address.' });
@@ -100,19 +113,23 @@ exports.handler = async (event) => {
     } catch (e) {}
   }
 
-  // 24h cache: same person + type. Returns the existing token so the share link still works.
+  // 24h cache: same person + primary job + secondary job. Returns the existing token so the share link still works.
   try {
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const r = await sb(`report_cards?select=composite_grade,composite_score,first_read,report,token&email=eq.${encodeURIComponent(email)}&business_type=eq.${type}&created_at=gte.${since}&order=created_at.desc&limit=1`);
+    const r = await sb(`report_cards?select=composite_grade,composite_score,first_read,report,token&email=eq.${encodeURIComponent(email)}&primary_job=eq.${primaryJob}&secondary_job=eq.${secondaryJob}&created_at=gte.${since}&order=created_at.desc&limit=1`);
     const rows = await r.json();
     if (Array.isArray(rows) && rows.length && rows[0].report) {
       const c = rows[0];
+      const rep = c.report || {};
       return json(200, {
         composite_grade: c.composite_grade,
         composite_score: c.composite_score,
         first_read: c.first_read,
-        piece_title: c.report.piece_title || 'Your Presence',
-        categories: c.report.categories || [],
+        piece_title: rep.piece_title || 'Your Presence',
+        narrative: rep.narrative || '',
+        audience_read: rep.audience_read || '',
+        harmony: rep.harmony || '',
+        categories: rep.categories || [],
         token: c.token || null,
         share_path: c.token ? `/report.html?t=${c.token}` : null,
         cached: true,
@@ -125,11 +142,15 @@ exports.handler = async (event) => {
 Subject name: ${fullName}
 ${linkedin ? 'LinkedIn/handle: ' + linkedin : ''}
 ${site ? 'Website: ' + site : ''}
-Context: ${TYPE_GUIDE[type]}
+
+${JOB_GUIDE[primaryJob]}
+${secondaryJob !== 'none' ? 'SECONDARY JOB (the same presence is also being read for this; do NOT grade against it, only use it to fill the "harmony" field): ' + JOB_GUIDE[secondaryJob] : ''}
+
+Grade the seven categories below against the PRIMARY job only. Calibrate every grade, score, finding, and fix to what the primary job demands, and frame each fix toward that job's outcome, never toward aesthetics. Letter grades A-F with +/-. If little is found, grade low and say so plainly and kindly. Keep every string short.
 
 Return ONLY a JSON object, no markdown fences and no preamble, exactly this shape:
-{"composite_grade":"B-","composite_score":74,"piece_title":"2-4 word verdict","first_read":"one vivid sentence on how they come across","categories":[{"key":"brand","label":"Brand Identity","sublabel":"consistency & clarity","grade":"B","score":72,"finding":"one short sentence","win":"2-4 word strength","fix":"2-4 word gap"},{"key":"linkedin","label":"LinkedIn","sublabel":"professional profile"},{"key":"website","label":"Website","sublabel":"digital HQ"},{"key":"seo","label":"Discoverability","sublabel":"do they show up"},{"key":"social","label":"Social Media","sublabel":"reach & activity"},{"key":"earned","label":"Earned Media","sublabel":"press & credibility"},{"key":"content","label":"Content Engine","sublabel":"are they publishing"}]}
-Every category needs grade, score(0-100), finding, win, fix. Calibrate to the context above. Frame each fix toward a business outcome (winning clients, looking fundable, building authority), not aesthetics. Letter grades A-F with +/-. If little is found, grade low and say so plainly and kindly. Keep strings short.`;
+{"composite_grade":"B-","composite_score":74,"piece_title":"2-4 word verdict","first_read":"one vivid sentence on how they come across","narrative":"1-2 sentences naming the story their presence is currently telling, framed for the primary job","audience_read":"1-2 sentences on how ${JOB_AUDIENCE[primaryJob]} most likely understands them right now based on what is findable","harmony":${secondaryJob !== 'none' ? '"1-2 sentences: where the presence already serves the secondary job (the overlap to double down on) and where optimizing for the primary job is costing the secondary one (the tension to watch)"' : '""'},"categories":[{"key":"brand","label":"Brand Identity","sublabel":"consistency & clarity","grade":"B","score":72,"finding":"one short sentence","win":"2-4 word strength","fix":"2-4 word gap"},{"key":"linkedin","label":"LinkedIn","sublabel":"professional profile"},{"key":"website","label":"Website","sublabel":"digital HQ"},{"key":"seo","label":"Discoverability","sublabel":"do they show up"},{"key":"social","label":"Social Media","sublabel":"reach & activity"},{"key":"earned","label":"Earned Media","sublabel":"press & credibility"},{"key":"content","label":"Content Engine","sublabel":"are they publishing"}]}
+Every category needs grade, score(0-100), finding, win, fix.`;
 
   let report;
   try {
@@ -138,7 +159,7 @@ Every category needs grade, score(0-100), finding, win, fix. Calibrate to the co
       headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 1500,
+        max_tokens: 1600,
         messages: [{ role: 'user', content: prompt }],
         tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 5 }],
       }),
@@ -162,6 +183,9 @@ Every category needs grade, score(0-100), finding, win, fix. Calibrate to the co
     composite_score: clampScore(report.composite_score),
     piece_title: String(report.piece_title || 'Your Presence').slice(0, 40),
     first_read: String(report.first_read || '').slice(0, 240),
+    narrative: String(report.narrative || '').slice(0, 320),
+    audience_read: String(report.audience_read || '').slice(0, 320),
+    harmony: secondaryJob !== 'none' ? String(report.harmony || '').slice(0, 320) : '',
     categories: report.categories.slice(0, 7).map((c) => ({
       key: String(c.key || '').slice(0, 20),
       label: String(c.label || '').slice(0, 40),
@@ -185,7 +209,8 @@ Every category needs grade, score(0-100), finding, win, fix. Calibrate to the co
       body: JSON.stringify({
         full_name: fullName,
         email,
-        business_type: type,
+        primary_job: primaryJob,
+        secondary_job: secondaryJob,
         linkedin: linkedin || null,
         website: site || null,
         composite_grade: clean.composite_grade,
