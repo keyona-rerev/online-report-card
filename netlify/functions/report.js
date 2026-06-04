@@ -242,10 +242,10 @@ Every category needs grade, score (0-100, or null if N/A), finding, win, fix. Fo
     composite_grade: report.composite_grade.trim(),
     composite_score: clampScore(report.composite_score),
     piece_title: stripTags(report.piece_title || 'Your Presence').slice(0, 40),
-    first_read: stripTags(report.first_read || '').slice(0, 240),
-    narrative: stripTags(report.narrative || '').slice(0, 320),
-    audience_read: stripTags(report.audience_read || '').slice(0, 320),
-    harmony: secondaryJob !== 'none' ? stripTags(report.harmony || '').slice(0, 320) : '',
+    first_read: stripTags(report.first_read || '').slice(0, 280),
+    narrative: stripTags(report.narrative || '').slice(0, 600),
+    audience_read: stripTags(report.audience_read || '').slice(0, 600),
+    harmony: secondaryJob !== 'none' ? stripTags(report.harmony || '').slice(0, 600) : '',
     channels,
     categories: report.categories.slice(0, 7).map((c) => {
       const grade = gradeOk(c.grade) ? c.grade.trim() : 'C';
@@ -256,7 +256,7 @@ Every category needs grade, score (0-100, or null if N/A), finding, win, fix. Fo
         sublabel: stripTags(c.sublabel || '').slice(0, 60),
         grade,
         score: isNA ? null : clampScore(c.score),
-        finding: stripTags(c.finding || '').slice(0, 240),
+        finding: stripTags(c.finding || '').slice(0, 300),
         win: stripTags(c.win || '').slice(0, 40),
         fix: stripTags(c.fix || '').slice(0, 40),
       };
