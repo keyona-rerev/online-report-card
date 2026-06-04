@@ -146,7 +146,6 @@
 
   <aside class="register">
     <div class="reg-block" style="border-top:none;padding-top:0">
-      <div class="reg-label">The Subject</div>
       <div class="subject-name" id="subjName">—</div>
       <div class="subject-sub" id="subjSub">Enter your details to begin</div>
     </div>
@@ -201,10 +200,6 @@
   </aside>
 
   <main>
-    <div class="gallery-head">
-      <div class="kicker">Your Online Presence</div>
-    </div>
-
     <div class="piece-frame">
       <div class="canvas" id="canvas">
         <div class="canvas-empty" id="canvasEmpty">
@@ -266,6 +261,9 @@ function wholeLetter(g){if(isNA(g))return 'N/A';return (g||'').trim().charAt(0).
 const $ = id => document.getElementById(id);
 const emailOk = e => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
 let loading = false;
+
+// Defensive strip: cached/old rows may still carry inline cite tags. Mirrors the server sanitizer.
+function stripTags(s){return String(s==null?'':s).replace(/<\/?cite[^>]*>/gi,'').replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();}
 
 // channel chips
 const selectedChannels = new Set();
@@ -348,6 +346,10 @@ function showError(msg){
 }
 function render(r){
   clearInterval(loadTimer);
+  // Defensive strip at render: mirror the server sanitizer so any stray cite tags
+  // (including from old cached rows) never reach the page as visible text.
+  ['composite_grade','first_read','piece_title','narrative','audience_read','harmony'].forEach(k=>{ if(r[k]!=null) r[k]=stripTags(r[k]); });
+  if(Array.isArray(r.categories)) r.categories=r.categories.map(c=>({...c,label:stripTags(c.label||''),sublabel:stripTags(c.sublabel||''),finding:stripTags(c.finding||''),win:stripTags(c.win||''),fix:stripTags(c.fix||'')}));
   const info=gInfo(r.composite_grade), bands=BANDS[info.tier]||BANDS.mid;
   const c=$('canvas'); c.querySelectorAll('.band').forEach(b=>b.remove());
   $('canvasEmpty').style.display='none';
