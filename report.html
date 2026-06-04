@@ -13,7 +13,7 @@
     --bg2:#0f0a04; --ink:#f4ecd8; --ink-dim:#b8a884; --ink-faint:#8a7a58;
     --line:rgba(244,236,216,.14); --panel:rgba(244,236,216,.04);
     --gold:#f2b705; --ember:#e8730c;
-    --good:#9ec96a; --okay:#e0a93a; --low:#e8884c; --bad:#e06a52;
+    --good:#9ec96a; --okay:#e0a93a; --low:#e8884c; --bad:#e06a52; --na:#8a7a58;
     --serif:'Fraunces',Georgia,serif; --sans:'Hanken Grotesk',system-ui,sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -23,7 +23,6 @@
   .spinner{width:30px;height:30px;border:2.5px solid rgba(244,236,216,.2);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;margin:60px auto 12px}
   @keyframes spin{to{transform:rotate(360deg)}}
 
-  /* capture target */
   .card{width:min(620px,100%);background:#1a1206;border:1px solid var(--line);border-radius:18px;
     padding:clamp(24px,4vw,40px);box-shadow:0 30px 80px rgba(0,0,0,.5)}
   .card-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:12px}
@@ -40,10 +39,12 @@
   .rows{margin-top:24px;border-top:1px solid var(--line);padding-top:6px}
   .row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid rgba(244,236,216,.07)}
   .row:last-child{border-bottom:none}
+  .row.na{opacity:.6}
   .row-label{font-size:13px;color:var(--ink);width:130px;flex-shrink:0}
   .row-bar{flex:1;height:5px;border-radius:3px;background:rgba(244,236,216,.1);overflow:hidden}
   .row-bar > div{height:100%;border-radius:3px}
-  .row-grade{font-family:var(--serif);font-size:18px;font-weight:600;width:34px;text-align:right;flex-shrink:0}
+  .row-grade{font-family:var(--serif);font-size:18px;font-weight:600;width:42px;text-align:right;flex-shrink:0}
+  .row-grade.na{font-size:13px;font-style:italic}
 
   .reads{margin-top:22px;border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:14px}
   .read-block .rk{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
@@ -92,11 +93,17 @@
   <div class="foot" id="footLink" style="display:none"><a href="/" >Run a report card →</a></div>
 
 <script>
-const GRADE={A:{c:'#9ec96a',t:'good'},B:{c:'#7fb6e0',t:'good'},C:{c:'#e0a93a',t:'mid'},D:{c:'#e8884c',t:'low'},F:{c:'#e06a52',t:'low'}};
+const GRADE={A:{c:'#9ec96a',t:'good'},B:{c:'#e6c15a',t:'good'},C:{c:'#d99a30',t:'mid'},D:{c:'#e8884c',t:'low'},F:{c:'#e06a52',t:'low'}};
+const NA={c:'#8a7a58',t:'na'};
 const BANDS={good:['#f4c01f','#e8730c','#c85316'],mid:['#e8920c','#c9461a','#9e3516'],low:['#c2410c','#7a2014','#4e1410']};
 const $=id=>document.getElementById(id);
-function gInfo(g){const k=(g||'C').trim().charAt(0).toUpperCase();return GRADE[k]||GRADE.C;}
+function isNA(g){return String(g||'').trim().toUpperCase()==='N/A';}
+function gInfo(g){if(isNA(g))return NA;const k=(g||'C').trim().charAt(0).toUpperCase();return GRADE[k]||GRADE.C;}
+function wholeLetter(g){if(isNA(g))return 'N/A';return (g||'').trim().charAt(0).toUpperCase();}
+// Defensive: strip any stray markup so old share links saved before the sanitizer render clean.
+function clean(s){return String(s==null?'':s).replace(/<\/?cite[^>]*>/gi,'').replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();}
 function esc(s){return String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+function show(s){return esc(clean(s));}
 
 const token=new URLSearchParams(location.search).get('t')||'';
 init();
@@ -111,25 +118,25 @@ async function init(){
 function fail(){ $('loading').style.display='none'; $('error').style.display='block'; }
 
 function render(r){
-  const info=gInfo(r.composite_grade), bands=BANDS[info.t];
+  const info=gInfo(r.composite_grade), bands=BANDS[info.t]||BANDS.mid;
   const first=(r.full_name||'').split(' ')[0]||'You';
   $('who').textContent=first+"'s reading";
   $('field').style.background='linear-gradient(178deg,'+bands[0]+' 0%,'+bands[1]+' 55%,'+bands[2]+' 100%)';
-  $('grade').textContent=r.composite_grade||'';
-  $('verdict').textContent=r.piece_title||'Your Presence';
-  $('firstread').textContent=r.first_read||'';
+  $('grade').textContent=wholeLetter(r.composite_grade);
+  $('verdict').textContent=clean(r.piece_title)||'Your Presence';
+  $('firstread').textContent=clean(r.first_read);
   $('score').textContent=(r.composite_score!=null?'Composite '+r.composite_score+' / 100':'');
   const rows=$('rows'); rows.innerHTML='';
   (r.categories||[]).forEach(cat=>{
-    const ci=gInfo(cat.grade);
-    const el=document.createElement('div'); el.className='row';
-    el.innerHTML='<div class="row-label">'+esc(cat.label)+'</div>'+
-      '<div class="row-bar"><div style="width:'+(cat.score||0)+'%;background:'+ci.c+'"></div></div>'+
-      '<div class="row-grade" style="color:'+ci.c+'">'+esc(cat.grade||'')+'</div>';
+    const na=isNA(cat.grade); const ci=gInfo(cat.grade);
+    const el=document.createElement('div'); el.className='row'+(na?' na':'');
+    el.innerHTML='<div class="row-label">'+show(cat.label)+'</div>'+
+      '<div class="row-bar"><div style="width:'+(na?0:(cat.score||0))+'%;background:'+ci.c+'"></div></div>'+
+      '<div class="row-grade'+(na?' na':'')+'" style="color:'+ci.c+'">'+(na?'N/A':show(cat.grade))+'</div>';
     rows.appendChild(el);
   });
   const reads=$('reads'); reads.innerHTML='';
-  const addRead=(label,text)=>{ if(!text) return; const d=document.createElement('div'); d.className='read-block'; d.innerHTML='<div class="rk">'+esc(label)+'</div><div class="rt">'+esc(text)+'</div>'; reads.appendChild(d); };
+  const addRead=(label,text)=>{ const t=clean(text); if(!t) return; const d=document.createElement('div'); d.className='read-block'; d.innerHTML='<div class="rk">'+esc(label)+'</div><div class="rt">'+esc(t)+'</div>'; reads.appendChild(d); };
   addRead("The story you're telling", r.narrative);
   addRead("How your audience reads you right now", r.audience_read);
   addRead("Your secondary job, and the overlap", r.harmony);
