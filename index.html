@@ -15,7 +15,7 @@
     --line:rgba(244,236,216,.14);
     --panel:rgba(244,236,216,.035);
     --gold:#f2b705; --ember:#e8730c; --rust:#c2410c;
-    --good:#9ec96a; --okay:#e0a93a; --low:#e8884c; --bad:#e06a52;
+    --good:#9ec96a; --okay:#e0a93a; --low:#e8884c; --bad:#e06a52; --na:#8a7a58;
     --serif:'Fraunces',Georgia,serif;
     --sans:'Hanken Grotesk',system-ui,sans-serif;
   }
@@ -57,6 +57,12 @@
   .field select option:disabled{color:var(--ink-faint)}
   .field input:focus,.field select:focus{border-color:rgba(242,183,5,.5);background:rgba(242,183,5,.05)}
   .field input::placeholder{color:var(--ink-faint)}
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
+  .chip{font-size:12px;padding:6px 11px;border:1px solid var(--line);border-radius:20px;color:var(--ink-dim);cursor:pointer;
+    user-select:none;transition:background .2s,border-color .2s,color .2s;background:var(--panel)}
+  .chip.on{background:rgba(242,183,5,.14);border-color:rgba(242,183,5,.5);color:var(--ink)}
+
   .turnstile-wrap{margin-top:14px}
   .run{
     margin-top:16px;border:none;cursor:pointer;border-radius:10px;width:100%;
@@ -71,7 +77,6 @@
 
   .gallery-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:22px}
   .kicker{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
-  .collection{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--ink-dim)}
 
   .piece-frame{display:flex;flex-direction:column;align-items:center}
   .canvas{position:relative;width:min(560px,92%);aspect-ratio:4/4.3;border-radius:6px;overflow:hidden;
@@ -97,11 +102,14 @@
   .breakdown{margin-top:40px}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:14px}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;opacity:0;transform:translateY(8px);animation:rise .5s forwards}
+  .card.na{opacity:0;background:rgba(244,236,216,.02);border-style:dashed}
   @keyframes rise{to{opacity:1;transform:none}}
   .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
   .card-label{font-size:13px;font-weight:600;color:var(--ink)}
+  .card.na .card-label{color:var(--ink-dim)}
   .card-sub{font-size:11px;color:var(--ink-faint);margin-top:1px}
   .card-grade{font-family:var(--serif);font-size:30px;font-weight:600;line-height:.9}
+  .card-grade.na{font-size:16px;font-style:italic;letter-spacing:.04em;align-self:center}
   .bar{height:5px;border-radius:3px;background:rgba(244,236,216,.1);margin:12px 0;overflow:hidden}
   .bar > div{height:100%;border-radius:3px;width:0;transition:width 1s cubic-bezier(.4,0,.2,1)}
   .finding{font-size:12.5px;color:var(--ink-dim);line-height:1.5}
@@ -157,7 +165,6 @@
       <div class="reg-label">Run a Report Card</div>
       <div class="field"><label>Full name</label><input id="inFull" placeholder="Jane Founder" autocomplete="name"></div>
       <div class="field"><label>Email</label><input id="inEmail" type="email" placeholder="you@company.com" autocomplete="email"></div>
-      <div class="field"><label>LinkedIn or handle <span class="opt">(optional)</span></label><input id="inLinkedIn" placeholder="linkedin.com/in/…"></div>
       <div class="field"><label>Website <span class="opt">(optional)</span></label><input id="inSite" placeholder="yoursite.com"></div>
       <div class="field"><label>Primary job of your presence</label>
         <select id="inPrimary">
@@ -177,9 +184,19 @@
           <option value="profile">Build a public profile</option>
         </select>
       </div>
+      <div class="field"><label>Channels you actually invest in <span class="opt">(optional)</span></label>
+        <div class="chips" id="chips">
+          <span class="chip" data-v="linkedin">LinkedIn</span>
+          <span class="chip" data-v="newsletter">Newsletter</span>
+          <span class="chip" data-v="instagram">Instagram</span>
+          <span class="chip" data-v="x">X</span>
+          <span class="chip" data-v="tiktok">TikTok</span>
+          <span class="chip" data-v="youtube">YouTube</span>
+        </div>
+      </div>
       <div class="turnstile-wrap"><div class="cf-turnstile" data-sitekey="0x4AAAAAADc7LYxnkCpYy3c4" data-theme="dark"></div></div>
       <button class="run" id="runBtn" disabled>Add your details and pick a job</button>
-      <div class="reg-note">Reads what's publicly findable, your site, LinkedIn, social, press, and grades it against the job you pick, not against how polished it looks. Adding a link or two sharpens the read.</div>
+      <div class="reg-note">Reads what's publicly findable when someone searches you, your site, profiles, social, and press, and grades how you show up against the job you pick, not how polished any one page looks.</div>
     </div>
   </aside>
 
@@ -239,13 +256,26 @@
 </div>
 
 <script>
-const GRADE = {A:{color:'#9ec96a',tier:'good'},B:{color:'#7fb6e0',tier:'good'},C:{color:'#e0a93a',tier:'mid'},D:{color:'#e8884c',tier:'low'},F:{color:'#e06a52',tier:'low'}};
+const GRADE = {A:{color:'#9ec96a',tier:'good'},B:{color:'#e6c15a',tier:'good'},C:{color:'#d99a30',tier:'mid'},D:{color:'#e8884c',tier:'low'},F:{color:'#e06a52',tier:'low'}};
+const NA = {color:'#8a7a58',tier:'na'};
 const BANDS = {good:['#f4c01f','#e8730c','#c85316'],mid:['#e8920c','#c9461a','#9e3516'],low:['#c2410c','#7a2014','#4e1410']};
-const LOAD_MSGS = ["Walking the room…","Reading the wall text…","Checking what a stranger sees first…","Holding it up to the light…","Hanging the piece…"];
-function gInfo(g){const k=(g||'C').trim().charAt(0).toUpperCase();return GRADE[k]||GRADE.C;}
+const LOAD_MSGS = ["Searching your name…","Reading what surfaces first…","Checking what a stranger finds…","Weighing reach and recency…","Hanging the piece…"];
+function isNA(g){return String(g||'').trim().toUpperCase()==='N/A';}
+function gInfo(g){if(isNA(g))return NA;const k=(g||'C').trim().charAt(0).toUpperCase();return GRADE[k]||GRADE.C;}
+function wholeLetter(g){if(isNA(g))return 'N/A';return (g||'').trim().charAt(0).toUpperCase();}
 const $ = id => document.getElementById(id);
 const emailOk = e => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
 let loading = false;
+
+// channel chips
+const selectedChannels = new Set();
+document.querySelectorAll('#chips .chip').forEach(chip=>{
+  chip.addEventListener('click',()=>{
+    const v=chip.dataset.v;
+    if(selectedChannels.has(v)){selectedChannels.delete(v);chip.classList.remove('on');}
+    else{selectedChannels.add(v);chip.classList.add('on');}
+  });
+});
 
 function refreshGate(){
   const ready = $('inFull').value.trim() && emailOk($('inEmail').value.trim()) && $('inPrimary').value;
@@ -261,26 +291,27 @@ function syncSecondary(){
 ['inFull','inEmail'].forEach(id=>$(id).addEventListener('input',refreshGate));
 $('inPrimary').addEventListener('change',()=>{syncSecondary();refreshGate();});
 $('runBtn').addEventListener('click',run);
-['inFull','inEmail','inLinkedIn','inSite'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter'&&!$('runBtn').disabled)run();}));
+['inFull','inEmail','inSite'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter'&&!$('runBtn').disabled)run();}));
 
 async function run(){
   if(loading) return;
   const full=$('inFull').value.trim(), email=$('inEmail').value.trim();
   if(!full||!emailOk(email)||!$('inPrimary').value){refreshGate();return;}
-  const linkedin=$('inLinkedIn').value.trim(), site=$('inSite').value.trim();
+  const site=$('inSite').value.trim();
   const primary_job=$('inPrimary').value, secondary_job=$('inSecondary').value;
+  const channels=Array.from(selectedChannels);
   let token='';
   try{ token=(window.turnstile&&turnstile.getResponse&&turnstile.getResponse())||document.querySelector('[name=cf-turnstile-response]')?.value||''; }catch(e){}
 
   loading=true; refreshGate();
   $('subjName').textContent=full;
-  $('subjSub').textContent=[site,linkedin].filter(Boolean).join(' · ')||'reading the public record';
+  $('subjSub').textContent=site||'reading the public record';
   showLoading();
 
   try{
     const res=await fetch('/api/report',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({full_name:full,email,linkedin,site,primary_job,secondary_job,turnstile_token:token})
+      body:JSON.stringify({full_name:full,email,site,primary_job,secondary_job,channels,turnstile_token:token})
     });
     const data=await res.json();
     if(!res.ok){ showError(data&&data.error?data.error:"Something went wrong. Please try again."); }
@@ -313,17 +344,17 @@ function showError(msg){
   $('reads').style.display='none';
   $('shareRow').style.display='none';
   $('canvasEmpty').style.display='flex';
-  $('canvasEmpty').innerHTML='<div class="ce-title">'+esc(msg)+'</div><div class="ce-sub">Adding a website or LinkedIn link gives a cleaner result.</div>';
+  $('canvasEmpty').innerHTML='<div class="ce-title">'+esc(msg)+'</div><div class="ce-sub">Adding your website can give a cleaner result.</div>';
 }
 function render(r){
   clearInterval(loadTimer);
-  const info=gInfo(r.composite_grade), bands=BANDS[info.tier];
+  const info=gInfo(r.composite_grade), bands=BANDS[info.tier]||BANDS.mid;
   const c=$('canvas'); c.querySelectorAll('.band').forEach(b=>b.remove());
   $('canvasEmpty').style.display='none';
   [['b1',bands[0]],['b2',bands[1]],['b3',bands[2]]].forEach(([cls,col])=>{const d=document.createElement('div');d.className='band '+cls;d.style.background=col;c.insertBefore(d,$('canvasGrade'));});
-  const cg=$('canvasGrade'); cg.style.display='flex'; cg.textContent=r.composite_grade||'';
+  const cg=$('canvasGrade'); cg.style.display='flex'; cg.textContent=wholeLetter(r.composite_grade);
   $('compositeBlock').style.display='block';
-  $('compGrade').textContent=r.composite_grade||''; $('compGrade').style.color=info.color;
+  $('compGrade').textContent=wholeLetter(r.composite_grade); $('compGrade').style.color=info.color;
   $('compScore').textContent=(r.composite_score!=null?r.composite_score+' / 100':'');
   $('firstreadBlock').style.display='block';
   $('firstRead').textContent=r.first_read||'';
@@ -331,13 +362,20 @@ function render(r){
   $('pieceDesc').textContent=r.first_read||'';
   const grid=$('grid'); grid.innerHTML='';
   (r.categories||[]).forEach((cat,idx)=>{
-    const ci=gInfo(cat.grade); const card=document.createElement('div');
-    card.className='card'; card.style.animationDelay=(idx*60)+'ms';
+    const na=isNA(cat.grade); const ci=gInfo(cat.grade); const card=document.createElement('div');
+    card.className='card'+(na?' na':''); card.style.animationDelay=(idx*60)+'ms';
+    const gradeHtml = na
+      ? '<div class="card-grade na" style="color:'+NA.color+'">N/A</div>'
+      : '<div class="card-grade" style="color:'+ci.color+'">'+esc(cat.grade||'')+'</div>';
+    const barHtml = na
+      ? '<div class="bar"><div data-w="0" style="background:'+NA.color+'"></div></div>'
+      : '<div class="bar"><div data-w="'+(cat.score||0)+'" style="background:'+ci.color+'"></div></div>';
+    const tagsHtml = na
+      ? '<div class="tags"><span class="tag fix">not found in search</span></div>'
+      : '<div class="tags">'+(cat.win?'<span class="tag win">'+esc(cat.win)+'</span>':'')+(cat.fix?'<span class="tag fix">'+esc(cat.fix)+'</span>':'')+'</div>';
     card.innerHTML='<div class="card-top"><div><div class="card-label">'+esc(cat.label)+'</div><div class="card-sub">'+esc(cat.sublabel||'')+'</div></div>'+
-      '<div class="card-grade" style="color:'+ci.color+'">'+esc(cat.grade||'')+'</div></div>'+
-      '<div class="bar"><div data-w="'+(cat.score||0)+'" style="background:'+ci.color+'"></div></div>'+
-      '<div class="finding">'+esc(cat.finding||'')+'</div>'+
-      '<div class="tags">'+(cat.win?'<span class="tag win">'+esc(cat.win)+'</span>':'')+(cat.fix?'<span class="tag fix">'+esc(cat.fix)+'</span>':'')+'</div>';
+      gradeHtml+'</div>'+barHtml+
+      '<div class="finding">'+esc(cat.finding||'')+'</div>'+tagsHtml;
     grid.appendChild(card);
   });
   $('breakdown').style.display='block';
