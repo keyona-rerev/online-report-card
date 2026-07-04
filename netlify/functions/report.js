@@ -83,9 +83,9 @@ exports.handler = async (event) => {
   const urlOk = (u) => !u || /^(https?:\/\/)?[\w.-]+\.[a-z]{2,}([/?#].*)?$/i.test(u);
   if (!urlOk(site)) return json(400, { error: 'That does not look like a web address.' });
 
-  const { ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY, TURNSTILE_SECRET, DAILY_CAP, RESEND_API_KEY, EMAIL_FROM } = process.env;
+  const { ANTHROPIC_API_KEY, SUPABASE_URL, TURNSTILE_SECRET, DAILY_CAP, RESEND_API_KEY, EMAIL_FROM } = process.env;
   const cap = parseInt(DAILY_CAP || '100', 10);
-  if (!ANTHROPIC_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+  if (!ANTHROPIC_API_KEY || !SUPABASE_URL) {
     return json(500, { error: 'The tool is not fully configured yet.' });
   }
 
@@ -102,11 +102,11 @@ exports.handler = async (event) => {
     } catch { return json(403, { error: 'Could not verify you are human. Please try again.' }); }
   }
 
-  const sb = (path, opts = {}) => fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+  // Reads and writes via PostgREST directly (anon role has full access on this
+  // dedicated backend; no keys needed). RLS stays on for defense in depth.
+  const sb = (path, opts = {}) => fetch(`${SUPABASE_URL}/${path}`, {
     ...opts,
     headers: {
-      apikey: SUPABASE_SERVICE_KEY,
-      Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
       'Content-Type': 'application/json',
       ...(opts.headers || {}),
     },
