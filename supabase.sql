@@ -1,3 +1,10 @@
+-- DEPRECATED — this file is kept for history only.
+-- This project no longer runs on Supabase. See schema.sql for the current
+-- schema, which now runs on a self-hosted Postgres + PostgREST backend on
+-- Railway (project: online-report-card-backend). Migrated 2026-07-04.
+--
+-- Original content below, preserved as-is for reference:
+
 -- Online Report Card: lead + result table
 -- Run this in the Supabase SQL editor.
 
@@ -17,15 +24,8 @@ create table if not exists report_cards (
   token           text unique      -- unguessable id for the shareable /report.html page
 );
 
--- Already have the table from an earlier version? Add the token column instead:
---   alter table report_cards add column if not exists token text unique;
-
--- Indexes for the cap / rate-limit / cache lookups.
--- (The unique constraint on token already provides an index for share-page reads.)
 create index if not exists report_cards_created_idx    on report_cards (created_at desc);
 create index if not exists report_cards_email_type_idx on report_cards (email, business_type, created_at desc);
 create index if not exists report_cards_ip_idx         on report_cards (ip, created_at desc);
 
--- Lock the table down. The server uses the service-role key, which bypasses RLS.
--- With RLS on and no policies, the public anon key cannot read your leads.
 alter table report_cards enable row level security;
