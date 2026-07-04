@@ -34,16 +34,14 @@ function cleanReport(rep) {
 }
 
 exports.handler = async (event) => {
-  const { SUPABASE_URL, SUPABASE_SERVICE_KEY, CLEANUP_KEY } = process.env;
+  const { SUPABASE_URL, CLEANUP_KEY } = process.env;
   const key = (event.queryStringParameters || {}).key || '';
   if (!CLEANUP_KEY || key !== CLEANUP_KEY) return json(403, { error: 'Forbidden.' });
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) return json(500, { error: 'Not configured.' });
+  if (!SUPABASE_URL) return json(500, { error: 'Not configured.' });
 
-  const sb = (path, opts = {}) => fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+  const sb = (path, opts = {}) => fetch(`${SUPABASE_URL}/${path}`, {
     ...opts,
     headers: {
-      apikey: SUPABASE_SERVICE_KEY,
-      Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
       'Content-Type': 'application/json',
       ...(opts.headers || {}),
     },
