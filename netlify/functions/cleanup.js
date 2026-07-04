@@ -34,12 +34,12 @@ function cleanReport(rep) {
 }
 
 exports.handler = async (event) => {
-  const { SUPABASE_URL, CLEANUP_KEY } = process.env;
+  const { POSTGREST_URL, CLEANUP_KEY } = process.env;
   const key = (event.queryStringParameters || {}).key || '';
   if (!CLEANUP_KEY || key !== CLEANUP_KEY) return json(403, { error: 'Forbidden.' });
-  if (!SUPABASE_URL) return json(500, { error: 'Not configured.' });
+  if (!POSTGREST_URL) return json(500, { error: 'Not configured.' });
 
-  const sb = (path, opts = {}) => fetch(`${SUPABASE_URL}/${path}`, {
+  const sb = (path, opts = {}) => fetch(`${POSTGREST_URL}/${path}`, {
     ...opts,
     headers: {
       'Content-Type': 'application/json',
