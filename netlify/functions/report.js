@@ -83,9 +83,9 @@ exports.handler = async (event) => {
   const urlOk = (u) => !u || /^(https?:\/\/)?[\w.-]+\.[a-z]{2,}([/?#].*)?$/i.test(u);
   if (!urlOk(site)) return json(400, { error: 'That does not look like a web address.' });
 
-  const { ANTHROPIC_API_KEY, SUPABASE_URL, TURNSTILE_SECRET, DAILY_CAP, RESEND_API_KEY, EMAIL_FROM } = process.env;
+  const { ANTHROPIC_API_KEY, POSTGREST_URL, TURNSTILE_SECRET, DAILY_CAP, RESEND_API_KEY, EMAIL_FROM } = process.env;
   const cap = parseInt(DAILY_CAP || '100', 10);
-  if (!ANTHROPIC_API_KEY || !SUPABASE_URL) {
+  if (!ANTHROPIC_API_KEY || !POSTGREST_URL) {
     return json(500, { error: 'The tool is not fully configured yet.' });
   }
 
@@ -104,7 +104,7 @@ exports.handler = async (event) => {
 
   // Reads and writes via PostgREST directly (anon role has full access on this
   // dedicated backend; no keys needed). RLS stays on for defense in depth.
-  const sb = (path, opts = {}) => fetch(`${SUPABASE_URL}/${path}`, {
+  const sb = (path, opts = {}) => fetch(`${POSTGREST_URL}/${path}`, {
     ...opts,
     headers: {
       'Content-Type': 'application/json',
