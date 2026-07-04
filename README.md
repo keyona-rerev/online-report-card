@@ -1,23 +1,30 @@
 # Online Report Card
 
-A ReRev Labs Pixie. Visitors enter their name, email, and a link or two, and get a graded report card of their online presence, rendered as a gallery piece. Every run captures a lead in Supabase and emails the visitor their card. Built as a static page plus two Netlify Functions so it scales to zero and costs nothing when idle.
+A ReRev Labs Pixie. Visitors enter their name, email, and a link or two, and get a graded report card of their online presence, rendered as a gallery piece. Every run captures a lead and emails the visitor their card. Built as a static page plus two Netlify Functions so it scales to zero and costs nothing meaningful when idle.
 
 The key is never in the browser. The page calls `/api/report`; the function holds every secret server-side.
+
+**Backend note (2026-07-04):** this project runs on a self-hosted Postgres + PostgREST backend on Railway (project: `online-report-card-backend`), not Supabase. It moved off Supabase to free up a free-tier project slot for another build. `supabase.sql` is kept for history; `schema.sql` is current.
 
 ## What's where
 
 - `index.html` — the tool people use
 - `report.html` — the shareable result page, with a Download-as-PNG button; reached at `/report.html?t=TOKEN`
-- `netlify/functions/report.js` — runs a report: validate, Turnstile, grade via Anthropic, save to Supabase, email the visitor
+- `netlify/functions/report.js` — runs a report: validate, Turnstile, grade via Anthropic, save to Postgres, email the visitor
 - `netlify/functions/get-report.js` — reads one saved report by its token so `report.html` can render it
-- `supabase.sql` — the leads/results table
+- `netlify/functions/cleanup.js` — one-time maintenance function to strip stray markup from older rows
+- `schema.sql` — the current leads/results tables (five tables total; `report_cards` is the one this tool writes to)
+- `supabase.sql` — deprecated, kept for history only
 
 ## Setup (one time)
 
-### 1. Supabase
-1. Create a project at supabase.com.
-2. SQL editor, paste and run `supabase.sql`.
-3. Project Settings, API: copy the **Project URL** and the **service_role** key (the secret one, not anon).
+### 1. Backend: Postgres + PostgREST on Railway
+1. Deploy the `postgrest-railway` template (or provision a Postgres service plus a `postgrest/postgrest` service pointed at it) in a Railway project.
+2. Give the PostgREST service a public domain, and make sure its service domain has an explicit port mapping to whatever port PostgREST listens on (3000 by default) — Railway does not always infer this automatically for Docker-image services.
+3. Run `schema.sql` against the Postgres service (Railway dashboard → Postgres service → Data tab).
+4. Copy the PostgREST service's public URL. That's your `POSTGREST_URL`.
+
+Note: the anon role on this backend is configured with full read/write access (equivalent to how the old Supabase setup used a service-role key), so no API key or auth header is needed from the functions. RLS is left enabled on the tables for defense in depth even though the anon role currently bypasses it.
 
 ### 2. Cloudflare Turnstile (the bot check)
 1. Cloudflare dashboard, Turnstile, add a widget for your domain.
@@ -35,8 +42,7 @@ The key is never in the browser. The page calls `/api/report`; the function hold
 | Variable | Value |
 |---|---|
 | `ANTHROPIC_API_KEY` | your Anthropic key |
-| `SUPABASE_URL` | the Project URL |
-| `SUPABASE_SERVICE_KEY` | the service_role key |
+| `POSTGREST_URL` | the PostgREST service's public URL (no trailing slash, no `/rest/v1`) |
 | `TURNSTILE_SECRET` | the Turnstile Secret key |
 | `DAILY_CAP` | a number, e.g. `100` (max runs per day) |
 | `RESEND_API_KEY` | your Resend key (email is skipped until this is set) |
